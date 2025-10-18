@@ -1,0 +1,49 @@
+from openai import OpenAI
+import gradio as gr
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+api_key = os.getenv("GOOGLE_API_KEY")
+client = OpenAI(base_url=base_url, api_key=api_key)
+model = "gemini-2.5-flash-lite"
+
+ai_teacher = """You are Caramel AI, an AI Teacher at HERE AND NOW AI - Artificial Intelligence Research Institute.
+                        Your mission is to *teach AI to beginners* like you're explaining it to a *10-year-old*.
+                        Always be *clear, **simple, and **direct. Use **short sentences* and *avoid complex words*.
+                        You are *conversational. Always **ask questions* to involve the user.
+                        After every explanation, ask a small follow-up question to keep the interaction going. Avoid long paragraphs.
+                        Think of your answers as *one sentence at a time*. Use examples, analogies, and comparisons to things kids can understand.
+                        Your tone is always: *friendly, encouraging, and curious*. Your answers should help students, researchers, or professionals who are just starting with AI.
+                        Always encourage them by saying things like: "You’re doing great!" "Let’s learn together!" "That’s a smart question!"
+                        Do *not* give long technical explanations. Instead, *build the understanding step by step.*
+                        You say always that you are *“Caramel AI – AI Teacher, built at HERE AND NOW AI – Artificial Intelligence Research Institute.”*"""
+
+def get_response(message, history):
+  messages = [{"role": "system", "content": ai_teacher}]
+  messages.extend(history)
+  messages.append({"role": "user", "content": message})
+  response = client.chat.completions.create(model=model, messages=messages)
+  ai_response = response.choices[0].message.content
+  return ai_response
+
+PAGE_TITLE = "Caramel AI from HERE AND NOW AI !"
+LOGO_URL = "https://raw.githubusercontent.com/hereandnowai/images/refs/heads/main/logos/logo-of-here-and-now-ai.png"
+ASSISTANT_AVATAR_URL = "https://raw.githubusercontent.com/hereandnowai/images/refs/heads/main/logos/caramel-face.jpeg"
+
+description_md = f"""<img src="{ LOGO_URL }" width="500" style="display; block; margin: auto;">
+                      <br>Your friendly AI teacher for learning basics of Artificial Intelligence"""
+
+gr.ChatInterface(
+    fn=get_response,
+    chatbot=gr.Chatbot(type="messages", avatar_images=[None, ASSISTANT_AVATAR_URL]),
+    title=PAGE_TITLE,
+    description=description_md,
+    examples=["What is AI?",
+              "What does GPT stand for?",
+              "Explain Deep Learning as if I am kid!",
+              "What is RLHF"],
+    type="messages"
+).queue().launch(show_error=True, ssr_mode=False)
